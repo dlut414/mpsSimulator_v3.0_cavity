@@ -441,87 +441,6 @@ namespace SIM {
 			std::cout << " max phi: " << phiMax << " --- id: " << idp << std::endl;
 			std::cout << " max Div: " << divMax << " --- id: " << idd << std::endl;
 		}
-#if BVP
-		void bvpSource() {
-			const auto* const part = derived().part;
-			for (auto p = 0; p < part->np; p++) {
-				if (part->type[p] == BD2) {
-					mSol->b[p] = 0.;
-					continue;
-				}
-				if (part->isFs(p)) {
-					mSol->b[p] = bvp->func(part->pos[p]);
-					continue;
-				}
-				mSol->b[p] = bvp->lap(part->pos[p]);
-			}
-		}
-
-		void bvpAvgError() {
-			const auto* const part = derived().part;
-			int n = 0;
-			R err = 0.;
-			for (auto p = 0; p < part->np; p++) {
-				if (part->type[p] != FLUID || part->isFs(p)) continue;
-				R ext = bvp->func(part->pos[p]);
-				err += abs(part->pres[p] - ext);
-				n++;
-			}
-			std::cout << " bvp --- avg Error: " << err / n << std::endl;
-			std::ofstream file("./out/out.txt", std::ofstream::app);
-			file << part->dp << " " << err / n << std::endl;
-			file.close();
-		}
-
-		void bvpMaxError() {
-			const auto* const part = derived().part;
-			R err = 0.;
-			for (auto p = 0; p < part->np; p++) {
-				if (part->type[p] != FLUID || part->isFs(p)) continue;
-				R ext = bvp->func(part->pos[p]);
-				R tmp = abs(part->pres[p] - ext);
-				if (tmp > err) err = tmp;
-			}
-			std::cout << " bvp --- max Error: " << err << std::endl;
-			std::ofstream file("./out/out.txt", std::ofstream::app);
-			file << part->dp << " " << err << std::endl;
-			file.close();
-		}
-
-		void gradMaxError() {
-			auto* const part = derived().part;
-			for (auto p = 0; p < part->np; p++) {
-				part->pres[p] = bvp->func(part->pos[p]);
-			}
-			R err = 0.;
-			for (auto p = 0; p < part->np; p++) {
-				vec ext = bvp->grad(part->pos[p]);
-				R tmp = (part->grad(part->pres, p) - ext).mag();
-				if (tmp > err) err = tmp;
-			}
-			std::cout << " |grad| --- max Error: " << err << std::endl;
-			std::ofstream file("./out/out.txt", std::ofstream::app);
-			file << part->dp << " " << err << std::endl;
-			file.close();
-		}
-
-		void lapMaxError() {
-			auto* const part = derived().part;
-			for (auto p = 0; p < part->np; p++) {
-				part->pres[p] = bvp->func(part->pos[p]);
-			}
-			R err = 0.;
-			for (auto p = 0; p < part->np; p++) {
-				R ext = bvp->lap(part->pos[p]);
-				R tmp = abs(part->lap(part->pres, p) - ext);
-				if (tmp > err) err = tmp;
-			}
-			std::cout << " lap --- max Error: " << err << std::endl;
-			std::ofstream file("./out/out.txt", std::ofstream::app);
-			file << part->dp << " " << err << std::endl;
-			file.close();
-		}
-#endif
 
 		void insertRand() {
 			auto* const part = derived().part;
@@ -537,9 +456,6 @@ namespace SIM {
 
 	protected:
 		int timeStep;
-#if BVP
-		Bvp<R>* bvp;
-#endif
 
 	};
 
