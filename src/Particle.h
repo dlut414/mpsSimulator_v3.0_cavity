@@ -58,7 +58,7 @@ namespace SIM {
 					file << pos[p][d] << " ";
 				}
 				for (int d = 0; d < D; d++) {
-					file << vel1[p][0] << " ";
+					file << vel1[p][d] << " ";
 				}
 				file << std::endl;
 			}

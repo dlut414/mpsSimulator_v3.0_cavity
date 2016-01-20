@@ -70,12 +70,15 @@ namespace SIM {
 				std::cout << " time --------> " << part->ct << std::endl;
 				std::cout << " dt ----------> " << para.dt << std::endl;
 			}
+			saveData();
+			sensorOut();
 		}
 
 		R stepGL() {
 			auto* const part = derived().part;
 			if (part->ct > para.tt) {
 				saveData();
+				sensorOut();
 				std::exit(0);
 			}
 			std::cout << " step ----------------------------------> " << timeStep << std::endl;
@@ -417,12 +420,13 @@ namespace SIM {
 			R velMax = std::numeric_limits<R>::min();
 			R phiMax = std::numeric_limits<R>::min();
 			R divMax = std::numeric_limits<R>::min();
+			R divSum = R(0);
 			unsigned idv = 0, idp = 0, idd = 0;
 			for (unsigned p = 0; p < part->np; p++) {
 				if (part->type[p] == BD2) continue;
-				const R vel = part->vel1[p].norm();
+				const R vel = part->vel2[p].norm();
 				const R phi = part->phi[p];
-				const R div = part->div(part->vel1, p);
+				const R div = part->div(part->vel2, p);
 				if (vel > velMax) {
 					velMax = vel;
 					idv = p;
@@ -431,15 +435,16 @@ namespace SIM {
 					phiMax = phi;
 					idp = p;
 				}
-				if (part->type[p] == BD1) continue;
 				if (abs(div) > abs(divMax)) {
 					divMax = div;
 					idd = p;
 				}
+				divSum += abs(div);
 			}
 			std::cout << " max vel: " << velMax << " --- id: " << idv << std::endl;
 			std::cout << " max phi: " << phiMax << " --- id: " << idp << std::endl;
 			std::cout << " max Div: " << divMax << " --- id: " << idd << std::endl;
+			std::cout << " avg Div: " << divSum/part->np << std::endl;
 		}
 
 		void insertRand() {
