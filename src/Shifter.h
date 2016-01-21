@@ -290,7 +290,7 @@ namespace SIM {
 						if (q == p) continue;
 						const auto dr = part->pos_m1[q] - part->pos_m1[p];
 						const auto dr1 = dr.norm();
-						static const auto re = part->dp*para.alpha;
+						const auto re = part->dp*para.alpha;
 						//gc -= w2(dr1, part->r0)* (dr / dr1);
 						if (dr1 > re) continue;
 						const auto ww = w2(dr1, re);
@@ -345,7 +345,7 @@ namespace SIM {
 						if (q == p) continue;
 						const auto dr = part->pos[q] - part->pos[p];
 						const auto dr1 = dr.norm();
-						static const auto re = part->dp*para.alpha;
+						const auto re = part->dp*para.alpha;
 						//gc -= w2(dr1, part->r0)* (dr / dr1);
 						if (dr1 > re) continue;
 						const auto ww = w2(dr1, re);
@@ -365,6 +365,68 @@ namespace SIM {
 				if (part->type[p] != FLUID) continue;
 				if (part->isFs(p)) continue;
 				dp[p] = part->pos[p] + dp[p];
+				tmp1[p] = part->derived().func_lsA_upwind(part->vel1, p, dp[p]);
+				tmp2[p] = part->derived().func_lsA_upwind(part->vel2, p, dp[p]);
+			}
+#if OMP
+#pragma omp parallel for
+#endif
+			for (int p = 0; p < int(part->np); p++) {
+				if (part->type[p] != FLUID) continue;
+				part->pos[p] = dp[p];
+				part->vel1[p] = tmp1[p];
+				part->vel2[p] = tmp2[p];
+			}
+		}
+
+		template <typename T, typename U>
+		void shiftSpringIterate(T* const part, const U& para) const {
+			std::vector<Vec> dp(part->np, Vec::Zero());
+			std::vector<Vec> tmp1(part->np, Vec::Zero());
+			std::vector<Vec> tmp2(part->np, Vec::Zero());
+#if OMP
+#pragma omp parallel for
+#endif
+			for (int p = 0; p<int(part->np); p++) {
+				dp[p] = part->pos[p];
+			}
+			for (int loop = 0; loop < 5; loop++) {
+#if OMP
+#pragma omp parallel for
+#endif
+				for (int p = 0; p < int(part->np); p++) {
+					if (part->type[p] != FLUID) continue;
+					Vec dpq = Vec::Zero();
+					Vec gc = Vec::Zero();
+					const auto& cell = part->cell;
+					const auto c = cell->iCoord(part->pos_m1[p]);
+					for (auto i = 0; i < cell->blockSize::value; i++) {
+						const auto key = cell->hash(c, i);
+						for (auto m = 0; m < cell->linkList[key].size(); m++) {
+							const auto& q = cell->linkList[key][m];
+							if (q == p) continue;
+							const auto dr = dp[q] - dp[p];
+							const auto dr1 = dr.norm();
+							const auto re = part->dp*para.alpha;
+							//gc -= w2(dr1, part->r0)* (dr / dr1);
+							if (dr1 > re) continue;
+							const auto ww = w2(dr1, re);
+							dpq -= ww * (dr / dr1);
+						}
+					}
+					//if (part->isFs(p)) {
+					//	gc = gc.norm();
+					//	dpq = dpq - 1.*(dpq*gc)*gc;
+					//}
+					dp[p] += para.c* para.umax* para.dt* dpq;
+				}
+			}
+#if OMP
+#pragma omp parallel for
+#endif
+			for (int p = 0; p < int(part->np); p++) {
+				if (part->type[p] != FLUID) continue;
+				if (part->isFs(p)) continue;
 				tmp1[p] = part->derived().func_lsA_upwind(part->vel1, p, dp[p]);
 				tmp2[p] = part->derived().func_lsA_upwind(part->vel2, p, dp[p]);
 			}

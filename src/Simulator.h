@@ -75,6 +75,10 @@ namespace SIM {
 		}
 
 		R stepGL() {
+			static const R Re = R(1.)*R(1.) / R(para.niu);
+			static int counter = 0;
+			static int maxLoop = 1;
+			static R minDt = 0.1* cfl();
 			auto* const part = derived().part;
 			if (part->ct > para.tt) {
 				saveData();
@@ -89,6 +93,12 @@ namespace SIM {
 			part->ct += para.dt;	timeStep++;
 			std::cout << " time --------> " << part->ct << std::endl;
 			std::cout << " dt ----------> " << para.dt << std::endl;
+			counter++;
+			maxLoop = static_cast<int>(0.1* Re / para.dt);
+			if (counter > maxLoop && para.dt > minDt) {
+				counter = 0;
+				para.cfl /= R(2);
+			}
 			return part->ct;
 		}
 
@@ -273,7 +283,7 @@ namespace SIM {
 		void shift() {
 			//shi.shiftPnd(part, para);
 			//shi.shiftXu(derived().part, para);
-			shi.shiftSpring(derived().part, para);
+			shi.shiftSpringIterate(derived().part, para);
 			//shi.shiftNearest2d(derived().part, para);
 			//shi.shiftPndLs(part, para);
 			//shi.shiftLs(part, para);
