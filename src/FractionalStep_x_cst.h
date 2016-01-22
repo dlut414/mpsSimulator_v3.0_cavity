@@ -23,11 +23,11 @@ namespace SIM {
 			calInvMat();
 
 			visTerm_i_q2r0();
-			//calPnd();
 			presTerm_i_q2();
 
 			syncPos();
-			convect_q2r0s2();
+			updateVelocity_q2r0();
+			updatePosition_s2();
 
 			calInvMat();
 			calForVis();
@@ -39,7 +39,7 @@ namespace SIM {
 
 			sync();
 
-			if (timeStep % 100 == 0) profileOut_avgVel2();
+			//if (timeStep % 100 == 0) profileOut_avgVel2();
 			//calInvMat(); //for sensor
 			//profileOut();
 			//sensorOut();
@@ -89,7 +89,7 @@ namespace SIM {
 			solvMat_phi();
 		}
 
-		void convect_q2r1s2() {
+		void updateVelocity_q2r1() {
 			const auto coefL = (2.* para.dt) / (3.* para.rho);
 			const auto miu = para.rho * para.niu;
 #if OMP
@@ -107,15 +107,9 @@ namespace SIM {
 			for (int p = 0; p < int(part->np); p++) {
 				if (part->type[p] == FLUID) part->vel2[p] += -coefL* part->grad(part->phi, p);
 			}
-#if OMP
-#pragma omp parallel for
-#endif
-			for (int p = 0; p < int(part->np); p++) {
-				if (part->type[p] == FLUID) part->pos[p] += 0.5* para.dt * (3.*part->vel1[p] - 1.* part->vel_m1[p]);
-			}
 		}
 
-		void convect_q1r0s1() {
+		void updateVelocity_q1r0() {
 			const auto coefL = para.dt / para.rho;
 			const auto miu = para.rho * para.niu;
 #if OMP
@@ -133,15 +127,9 @@ namespace SIM {
 			for (int p = 0; p < int(part->np); p++) {
 				if (part->type[p] == FLUID) part->vel2[p] += -coefL * part->grad(part->phi, p);
 			}
-#if OMP
-#pragma omp parallel for
-#endif
-			for (int p = 0; p < int(part->np); p++) {
-				if (part->type[p] == FLUID) part->pos[p] += 0.5* para.dt * (part->vel1[p] + part->vel2[p]);
-			}
 		}
 
-		void convect_q2r0s1() {
+		void updateVelocity_q2r0() {
 			const auto coefL = (2.* para.dt) / (3.* para.rho);
 			const auto miu = para.rho * para.niu;
 #if OMP
@@ -159,6 +147,9 @@ namespace SIM {
 			for (int p = 0; p < int(part->np); p++) {
 				if (part->type[p] == FLUID) part->vel2[p] += -coefL* part->grad(part->phi, p);
 			}
+		}
+
+		void updatePosition_s1() {
 #if OMP
 #pragma omp parallel for
 #endif
@@ -167,24 +158,7 @@ namespace SIM {
 			}
 		}
 
-		void convect_q2r0s2() {
-			const auto coefL = (2.* para.dt) / (3.* para.rho);
-			const auto miu = para.rho * para.niu;
-#if OMP
-#pragma omp parallel for
-#endif
-			for (int p = 0; p < int(part->np); p++) {
-				if (part->type[p] == FLUID || part->type[p] == BD1) {
-					part->pres[p] = part->phi[p] - miu* part->div(part->vel2, p);
-				}
-				else if (part->type[p] == BD2) part->pres[p] = part->phi[p];
-			}
-#if OMP
-#pragma omp parallel for
-#endif
-			for (int p = 0; p < int(part->np); p++) {
-				if (part->type[p] == FLUID) part->vel2[p] += -coefL* part->grad(part->phi, p);
-			}
+		void updatePosition_s2() {
 #if OMP
 #pragma omp parallel for
 #endif

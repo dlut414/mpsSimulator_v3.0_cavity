@@ -425,7 +425,7 @@ namespace SIM {
 			}
 		}
 
-		void check() const {
+		R check() const {
 			const auto* const part = derived().part;
 			R velMax = std::numeric_limits<R>::min();
 			R phiMax = std::numeric_limits<R>::min();
@@ -455,6 +455,7 @@ namespace SIM {
 			std::cout << " max phi: " << phiMax << " --- id: " << idp << std::endl;
 			std::cout << " max Div: " << divMax << " --- id: " << idd << std::endl;
 			std::cout << " avg Div: " << divSum/part->np << std::endl;
+			return divMax;
 		}
 
 		void insertRand() {
