@@ -7,8 +7,7 @@
 */
 #pragma once
 #include "Header.h"
-#include "../common/typedef/Vec3.h"
-#include "../common/typedef/BBox.h"
+#include "BBox.h"
 #include "Controller.h"
 
 namespace REN {
