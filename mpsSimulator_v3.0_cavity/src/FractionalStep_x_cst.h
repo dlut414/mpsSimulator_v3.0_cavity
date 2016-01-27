@@ -239,7 +239,8 @@ namespace SIM {
 				}
 				auto pp = 0.;
 				const auto& mm = part->invMat[p];
-				const auto& c = part->cell->iCoord(part->pos[p]);
+				const auto& cell = part->cell;
+				const auto c = part->cell->iCoord(part->pos[p]);
 				for (auto i = 0; i < cell->blockSize::value; i++) {
 					const auto key = cell->hash(c, i);
 					for (auto m = 0; m < part->cell->linkList[key].size(); m++) {
@@ -248,7 +249,7 @@ namespace SIM {
 						if (part->bdOpt(p, q)) continue;
 #endif
 						const auto dr = part->pos[q] - part->pos[p];
-						const auto dr1 = dr.mag();
+						const auto dr1 = dr.norm();
 						if (dr1 > part->r0) continue;
 						if (q == p) continue;
 						const auto w = part->w3(dr1);
@@ -279,7 +280,7 @@ namespace SIM {
 			for (int p = 0; p < int(part->np); p++) {
 				if (part->type[p] == BD1 || part->type[p] == BD2) {
 					for (auto d = 0; d < D; d++) {
-						mSol->rhs[d*p + d] = part->vel1[p][d];
+						mSol->rhs[D*p + d] = part->vel1[p][d];
 					}
 					continue;
 				}
@@ -288,7 +289,7 @@ namespace SIM {
 					- (1. / para.rho)* gd
 					+ para.g;
 				for (auto d = 0; d < D; d++) {
-					mSol->rhs[d*p + d] = part->rhs[d];
+					mSol->rhs[D*p + d] = part->rhs[d];
 				}
 			}
 		}
@@ -300,13 +301,13 @@ namespace SIM {
 			for (int p = 0; p < int(part->np); p++) {
 				if (part->type[p] == BD1 || part->type[p] == BD2) {
 					for (auto d = 0; d < D; d++) {
-						mSol->rhs[d*p + d] = part->vel1[p][d];
+						mSol->rhs[D*p + d] = part->vel1[p][d];
 					}
 					continue;
 				}
 				const auto rhs = (1. / para.dt)* part->vel1[p] + para.g;
 				for (auto d = 0; d < D; d++) {
-					mSol->rhs[d*p + d] = part->rhs[d];
+					mSol->rhs[D*p + d] = rhs[d];
 				}
 			}
 		}

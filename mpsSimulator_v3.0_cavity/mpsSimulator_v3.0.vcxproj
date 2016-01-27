@@ -203,6 +203,7 @@
     <ClInclude Include="src\Particle_x.h" />
     <ClInclude Include="src\Particle_x_cst.h" />
     <ClInclude Include="src\Polynomial.h" />
+    <ClInclude Include="src\Simpler_x_cst.h" />
     <ClInclude Include="src\_Polynomial.h" />
     <ClInclude Include="src\Sensor.h" />
     <ClInclude Include="src\Shifter.h" />
